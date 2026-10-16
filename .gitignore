@@ -1,0 +1,7 @@
+node_modules
+dist
+*.local
+.vite
+coverage
+# Saved collections/environments (may contain secrets)
+server/data
