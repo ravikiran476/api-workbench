@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import type { ProxyResponse } from '../../../shared/types';
+import { STANDALONE } from '../api';
 import { formatBytes, formatDuration, prettyJson } from '../lib/request';
 import { Alert, Button, CopyButton, Segmented, Tabs, cx } from './ui';
 
@@ -17,6 +18,8 @@ const ERROR_HINTS: Record<string, string> = {
   ENOTFOUND: 'Check the host name for typos, or that your environment variables resolve to a real host.',
   TIMEOUT: 'The server did not finish responding in time.',
   SERVER_UNREACHABLE: 'Start it with `npm run dev` from the project root.',
+  BROWSER_FETCH_FAILED:
+    'In browser mode, requests are subject to CORS: the API must send Access-Control-Allow-Origin. Run API Workbench locally (npm run dev) to call any API through its server.',
   DEPTH_ZERO_SELF_SIGNED_CERT: 'The server uses a self-signed certificate, which is not trusted.',
 };
 
@@ -40,6 +43,12 @@ export function ResponseViewer({ state, onCancel }: { state: ResponseState; onCa
               <kbd className="rounded border border-slate-300 px-1 dark:border-slate-600">Ctrl</kbd> +{' '}
               <kbd className="rounded border border-slate-300 px-1 dark:border-slate-600">S</kbd> to save
             </p>
+            {STANDALONE && (
+              <p className="mx-auto mt-4 max-w-md text-xs leading-relaxed">
+                Browser mode: requests go directly from your browser, so the API must allow CORS. Try{' '}
+                <code className="text-slate-500">https://jsonplaceholder.typicode.com/todos/1</code>
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -200,6 +209,12 @@ function ResponseBody({ response: r }: { response: ProxyResponse }) {
 
 function HeaderTable({ headers }: { headers: Array<[string, string]> }) {
   return (
+    <>
+    {STANDALONE && (
+      <p className="px-4 pt-2 text-xs text-slate-500 dark:text-slate-400">
+        Browser mode shows only the headers the API exposes via CORS (Access-Control-Expose-Headers).
+      </p>
+    )}
     <table className="w-full text-left text-xs">
       <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
         {headers.map(([k, v], i) => (
@@ -210,6 +225,7 @@ function HeaderTable({ headers }: { headers: Array<[string, string]> }) {
         ))}
       </tbody>
     </table>
+    </>
   );
 }
 

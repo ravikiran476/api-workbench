@@ -61,7 +61,7 @@ export interface PreparedRequest {
 }
 
 /** Substitutes {{variables}}, applies auth and default Content-Type, and produces what the proxy sends. */
-export function prepareRequest(req: ApiRequest, variables: KeyValue[]): PreparedRequest {
+export function prepareRequest(req: ApiRequest, variables: KeyValue[], defaultScheme: 'http' | 'https' = 'http'): PreparedRequest {
   const vars = toVariableMap(variables);
   const unresolved = new Set<string>();
   const sub = (s: string) =>
@@ -72,7 +72,7 @@ export function prepareRequest(req: ApiRequest, variables: KeyValue[]): Prepared
     });
 
   let url = sub(req.url.trim());
-  if (url && !/^[a-z][\w+.-]*:\/\//i.test(url)) url = `http://${url}`;
+  if (url && !/^[a-z][\w+.-]*:\/\//i.test(url)) url = `${defaultScheme}://${url}`;
 
   const headers: Array<[string, string]> = req.headers
     .filter((h) => h.enabled && h.key.trim())

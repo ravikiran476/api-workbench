@@ -1,4 +1,5 @@
 import { isUtf8 } from 'node:buffer';
+import { isTextualContentType } from '../../shared/content';
 import type { ProxyRequest, ProxyResponse } from '../../shared/types';
 import { HttpError } from './errors';
 
@@ -123,6 +124,3 @@ function networkError(e: unknown, timeoutMs: number): HttpError {
   return new HttpError(502, message, code ?? 'NETWORK_ERROR');
 }
 
-export function isTextualContentType(contentType: string): boolean {
-  return /^text\/|json|xml|javascript|ecmascript|x-www-form-urlencoded|graphql|yaml|csv/i.test(contentType);
-}

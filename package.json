@@ -9,7 +9,9 @@
   ],
   "scripts": {
     "dev": "concurrently -k -n server,client -c blue,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
+    "dev:browser": "npm run dev:browser -w client",
     "build": "npm run build -w client",
+    "build:standalone": "npm run build:standalone -w client",
     "start": "npm run start -w server",
     "test": "npm test -w server && npm test -w client",
     "typecheck": "npm run typecheck -w server && npm run typecheck -w client"

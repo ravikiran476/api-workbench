@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import {
   HTTP_METHODS,
   type ApiRequest,
@@ -9,11 +8,23 @@ import {
   type ImportResult,
   type KeyValue,
   type RequestBody,
-} from '../../shared/types';
-import { parseQuery, splitUrl } from '../../shared/url';
-import { HttpError } from './errors';
+} from './types';
+import { parseQuery, splitUrl } from './url';
 
 // Postman Collection Format v2.0 / v2.1: https://schema.postman.com/
+// Runs in both Node and the browser (used directly by the client's browser-only mode).
+
+/** Thrown when the input isn't a Postman collection we can import. */
+export class PostmanFormatError extends Error {
+  readonly code: string;
+
+  constructor(message: string, code: string) {
+    super(message);
+    this.code = code;
+  }
+}
+
+const randomUUID = () => crypto.randomUUID();
 
 export const POSTMAN_SCHEMA_V21 = 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json';
 
@@ -39,11 +50,11 @@ function authParams(v: unknown): Record<string, string> {
 
 export function importPostman(input: unknown): ImportResult {
   if (!isObj(input) || !isObj(input.info) || !Array.isArray(input.item)) {
-    throw new HttpError(400, 'Not a Postman collection: expected "info" and "item" fields', 'INVALID_POSTMAN');
+    throw new PostmanFormatError('Not a Postman collection: expected "info" and "item" fields', 'INVALID_POSTMAN');
   }
   const schema = str(input.info.schema);
   if (schema && !/\/v2\.[01]\.\d+\//.test(schema)) {
-    throw new HttpError(400, `Unsupported Postman schema (${schema}). Re-export the collection as v2.1.`, 'UNSUPPORTED_POSTMAN_VERSION');
+    throw new PostmanFormatError(`Unsupported Postman schema (${schema}). Re-export the collection as v2.1.`, 'UNSUPPORTED_POSTMAN_VERSION');
   }
 
   const name = str(input.info.name, 'Imported collection');

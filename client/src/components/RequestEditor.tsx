@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { HTTP_METHODS, type ApiRequest, type HttpMethod, type KeyValue } from '../../../shared/types';
+import { DEFAULT_SCHEME } from '../api';
 import { paramsFromUrl, prepareRequest, toCurl, urlWithParams } from '../lib/request';
 import { AuthEditor } from './AuthEditor';
 import { BodyEditor } from './BodyEditor';
@@ -36,7 +37,7 @@ export function RequestEditor({
   const [tab, setTab] = useState<Tab>('params');
   const set = (patch: Partial<ApiRequest>) => onChange({ ...request, ...patch });
 
-  const prepared = useMemo(() => prepareRequest(request, variables), [request, variables]);
+  const prepared = useMemo(() => prepareRequest(request, variables, DEFAULT_SCHEME), [request, variables]);
 
   const bodyLabel = request.body.mode === 'none' ? 'Body' : `Body · ${request.body.mode === 'urlencoded' ? 'form' : request.body.mode}`;
   const authLabel = request.auth.type === 'none' ? 'Auth' : 'Auth ●';

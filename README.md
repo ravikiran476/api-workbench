@@ -31,10 +31,29 @@ Open http://localhost:5173. The API server runs on http://127.0.0.1:4000, and Vi
 | Script | Purpose |
 | --- | --- |
 | `npm run dev` | Start the server and the client with hot reload |
+| `npm run dev:browser` | Client only, in browser mode (no server) |
 | `npm run build` | Build the client to `client/dist` |
+| `npm run build:standalone` | Build the browser-mode client (what Vercel runs) |
 | `npm start` | Start the server only; it serves `client/dist` when that folder exists (http://127.0.0.1:4000) |
 | `npm test` | Run the server and client test suites |
 | `npm run typecheck` | Type-check both packages |
+
+## Two ways to run
+
+| | **Local (full)** — `npm run dev` | **Browser mode** — Vercel / `npm run dev:browser` |
+| --- | --- | --- |
+| Requests sent by | The Express server, so any API works and there are no CORS limits | Your browser, so the API must allow CORS |
+| Request headers | All | Browsers block a few (`Cookie`, `Host`, `Origin`, …) |
+| Response headers | All | Only those exposed via CORS |
+| `http://` APIs | Yes | Only from an `http://` page (https pages block mixed content) |
+| Collections & environments | `server/data/workspace.json` | This browser's `localStorage` |
+| Postman import/export | ✓ | ✓ |
+
+Browser mode is the same React app built with `--mode standalone` (see `client/.env.standalone`). It swaps the server backend for `client/src/browserBackend.ts`.
+
+### Deploying to Vercel
+
+`vercel.json` already sets everything: it runs `npm run build:standalone` and serves `client/dist`. In Vercel, choose **Add New → Project**, import the GitHub repo, and click **Deploy**. Don't change the defaults or the root directory. The Express server is not deployed: a public request-forwarding service would let anyone send traffic through it and could expose saved secrets.
 
 ### Configuration (server environment variables)
 
@@ -47,15 +66,16 @@ Open http://localhost:5173. The API server runs on http://127.0.0.1:4000, and Vi
 ## Project layout
 
 ```
-shared/          Types and URL helpers used by both sides
+shared/          Code used by both sides: types, URL helpers, Postman v2.x import / v2.1 export
 server/src/
   app.ts         Express app: REST API, local-only guard, error handling
   proxy.ts       Sends requests: timeouts, size limit, binary detection, readable network errors
-  postman.ts     Postman v2.x import / v2.1 export
   store.ts       JSON-file workspace store (serialized, atomic writes)
   schemas.ts     Zod validation for every request body
 client/src/
   App.tsx        Layout, editor state, send/save flows, shortcuts
+  api.ts         Backend interface + server implementation; picks browser mode at build time
+  browserBackend.ts  localStorage storage + direct fetch (browser mode)
   lib/request.ts Variable substitution, auth, URL⇄params sync, cURL
   components/    Sidebar, RequestEditor, ResponseViewer, EnvironmentManager, …
 ```

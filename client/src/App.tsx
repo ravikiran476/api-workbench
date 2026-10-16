@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { exportPostman } from '../../shared/postman';
 import type { ApiRequest, Collection } from '../../shared/types';
-import { api, ApiClientError } from './api';
+import { api, ApiClientError, DEFAULT_SCHEME, STANDALONE } from './api';
 import { EnvironmentManager } from './components/EnvironmentManager';
 import { RequestEditor } from './components/RequestEditor';
 import { ResponseViewer, type ResponseState } from './components/ResponseViewer';
@@ -79,7 +80,7 @@ export default function App() {
 
   // ── Sending ──
   const send = useCallback(async () => {
-    const { request, unresolved } = prepareRequest(editor.request, activeEnv?.variables ?? []);
+    const { request, unresolved } = prepareRequest(editor.request, activeEnv?.variables ?? [], DEFAULT_SCHEME);
     if (!request.url) return;
     if (unresolved.length) notify('warning', `Sending with undefined variables: ${unresolved.map((v) => `{{${v}}}`).join(', ')}`);
 
@@ -174,6 +175,14 @@ export default function App() {
     if (ok && editor.request.id === r.id) setEditor((ed) => ({ ...ed, collectionId: null, snapshot: '' }));
   };
 
+  const exportCollection = (c: Collection) => {
+    const blob = new Blob([JSON.stringify(exportPostman(c), null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const filename = `${c.name.replace(/[^\w.-]+/g, '_') || 'collection'}.postman_collection.json`;
+    Object.assign(document.createElement('a'), { href: url, download: filename }).click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   const importFile = async (file: File) => {
     let json: unknown;
     try {
@@ -205,6 +214,14 @@ export default function App() {
             </svg>
           </span>
           <span className="font-bold tracking-tight">API Workbench</span>
+          {STANDALONE && (
+            <span
+              className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-800 dark:bg-sky-950 dark:text-sky-300"
+              title="This hosted version sends requests directly from your browser (the API must allow CORS) and saves collections in this browser only. Run it locally to call any API."
+            >
+              Browser mode
+            </span>
+          )}
         </div>
         <div className="ml-auto flex items-center gap-2">
           <label className="hidden text-xs text-slate-500 sm:block" htmlFor="env-select">
@@ -243,6 +260,7 @@ export default function App() {
             onCreateCollection={() => void createCollection()}
             onRenameCollection={(c) => void renameCollection(c)}
             onDeleteCollection={(c) => void deleteCollection(c)}
+            onExportCollection={exportCollection}
             onDeleteRequest={(c, r) => void deleteRequest(c, r)}
             onImport={(f) => void importFile(f)}
           />

@@ -8,7 +8,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { ApiRequest, Collection, ImportResult, ProxyResponse } from '../../shared/types';
 import { createApp } from './app';
-import { exportPostman, importPostman } from './postman';
+import { exportPostman, importPostman } from '../../shared/postman';
 import { WorkspaceStore } from './store';
 
 // ── Target server the proxy talks to ──

@@ -3,8 +3,8 @@ import path from 'node:path';
 import express, { type ErrorRequestHandler, type RequestHandler } from 'express';
 import { ZodError } from 'zod';
 import type { ApiErrorBody, Collection, Environment } from '../../shared/types';
+import { PostmanFormatError, exportPostman, importPostman } from '../../shared/postman';
 import { HttpError } from './errors';
-import { exportPostman, importPostman } from './postman';
 import { executeRequest } from './proxy';
 import {
   CollectionInputSchema,
@@ -188,6 +188,9 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     };
   } else if (err instanceof HttpError) {
     status = err.status;
+    body = { error: err.message, code: err.code };
+  } else if (err instanceof PostmanFormatError) {
+    status = 400;
     body = { error: err.message, code: err.code };
   } else if (err?.type === 'entity.too.large') {
     status = 413;

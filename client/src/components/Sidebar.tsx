@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import type { ApiRequest, Collection } from '../../../shared/types';
-import { api } from '../api';
 import { Button, IconButton, MethodLabel, TextInput, cx } from './ui';
 
 export function Sidebar({
@@ -11,6 +10,7 @@ export function Sidebar({
   onCreateCollection,
   onRenameCollection,
   onDeleteCollection,
+  onExportCollection,
   onDeleteRequest,
   onImport,
 }: {
@@ -21,6 +21,7 @@ export function Sidebar({
   onCreateCollection: () => void;
   onRenameCollection: (c: Collection) => void;
   onDeleteCollection: (c: Collection) => void;
+  onExportCollection: (c: Collection) => void;
   onDeleteRequest: (c: Collection, r: ApiRequest) => void;
   onImport: (file: File) => void;
 }) {
@@ -93,15 +94,9 @@ export function Sidebar({
                   <IconButton label={`Rename ${c.name}`} onClick={() => onRenameCollection(c)}>
                     ✎
                   </IconButton>
-                  <a
-                    href={api.exportPostmanUrl(c.id)}
-                    download
-                    aria-label={`Export ${c.name} as Postman collection`}
-                    title="Export as Postman v2.1"
-                    className="grid size-7 place-items-center rounded-md text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-100"
-                  >
+                  <IconButton label={`Export ${c.name} as Postman v2.1`} onClick={() => onExportCollection(c)}>
                     ⤓
-                  </a>
+                  </IconButton>
                   <IconButton label={`Delete ${c.name}`} onClick={() => onDeleteCollection(c)} className="hover:text-rose-600">
                     🗑
                   </IconButton>

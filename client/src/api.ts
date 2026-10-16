@@ -7,17 +7,29 @@ import type {
   ProxyResponse,
   Workspace,
 } from '../../shared/types';
+import { browserBackend } from './browserBackend';
+import { ApiClientError } from './errors';
 
-export class ApiClientError extends Error {
-  readonly code?: string;
-  readonly status: number;
+export { ApiClientError };
 
-  constructor(message: string, status: number, code?: string) {
-    super(message);
-    this.status = status;
-    this.code = code;
-  }
+/** Storage + sending. Implemented by the Express server, or entirely in the browser (Vercel demo). */
+export interface Backend {
+  workspace(): Promise<Workspace>;
+  createCollection(name: string): Promise<Collection>;
+  saveCollection(c: Collection): Promise<Collection>;
+  deleteCollection(collectionId: string): Promise<void>;
+  importPostman(collection: unknown): Promise<ImportResult>;
+  createEnvironment(name: string): Promise<Environment>;
+  saveEnvironment(env: Environment): Promise<Environment>;
+  deleteEnvironment(envId: string): Promise<void>;
+  send(req: ProxyRequest, signal?: AbortSignal): Promise<ProxyResponse>;
 }
+
+/** True for the browser-only build (`vite build --mode standalone`). */
+export const STANDALONE = import.meta.env.VITE_STANDALONE === 'true';
+
+/** Scheme assumed for URLs typed without one. The hosted (https) demo can't call http:// APIs. */
+export const DEFAULT_SCHEME = STANDALONE ? 'https' : 'http';
 
 async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   let res: Response;
@@ -43,18 +55,19 @@ const json = (method: string, body: unknown, signal?: AbortSignal): RequestInit 
 });
 const id = encodeURIComponent;
 
-export const api = {
+const serverBackend: Backend = {
   workspace: () => call<Workspace>('/workspace'),
 
-  createCollection: (name: string) => call<Collection>('/collections', json('POST', { name })),
-  saveCollection: (c: Collection) => call<Collection>(`/collections/${id(c.id)}`, json('PUT', c)),
-  deleteCollection: (collectionId: string) => call<void>(`/collections/${id(collectionId)}`, { method: 'DELETE' }),
-  exportPostmanUrl: (collectionId: string) => `/api/collections/${id(collectionId)}/export/postman`,
-  importPostman: (collection: unknown) => call<ImportResult>('/import/postman', json('POST', collection)),
+  createCollection: (name) => call<Collection>('/collections', json('POST', { name })),
+  saveCollection: (c) => call<Collection>(`/collections/${id(c.id)}`, json('PUT', c)),
+  deleteCollection: (collectionId) => call<void>(`/collections/${id(collectionId)}`, { method: 'DELETE' }),
+  importPostman: (collection) => call<ImportResult>('/import/postman', json('POST', collection)),
 
-  createEnvironment: (name: string) => call<Environment>('/environments', json('POST', { name })),
-  saveEnvironment: (env: Environment) => call<Environment>(`/environments/${id(env.id)}`, json('PUT', env)),
-  deleteEnvironment: (envId: string) => call<void>(`/environments/${id(envId)}`, { method: 'DELETE' }),
+  createEnvironment: (name) => call<Environment>('/environments', json('POST', { name })),
+  saveEnvironment: (env) => call<Environment>(`/environments/${id(env.id)}`, json('PUT', env)),
+  deleteEnvironment: (envId) => call<void>(`/environments/${id(envId)}`, { method: 'DELETE' }),
 
-  send: (req: ProxyRequest, signal?: AbortSignal) => call<ProxyResponse>('/proxy', json('POST', req, signal)),
+  send: (req, signal) => call<ProxyResponse>('/proxy', json('POST', req, signal)),
 };
+
+export const api: Backend = STANDALONE ? browserBackend : serverBackend;

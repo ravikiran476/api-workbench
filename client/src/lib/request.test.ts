@@ -38,6 +38,7 @@ describe('prepareRequest', () => {
 
   it('adds a default scheme', () => {
     expect(prepareRequest(req({ url: 'localhost:3000/x' }), []).request.url).toBe('http://localhost:3000/x');
+    expect(prepareRequest(req({ url: 'api.dev/x' }), [], 'https').request.url).toBe('https://api.dev/x');
   });
 
   it('applies bearer auth without overriding an explicit Authorization header', () => {
