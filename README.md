@@ -40,7 +40,7 @@ Open http://localhost:5173. The API server runs on http://127.0.0.1:4000, and Vi
 
 ## Two ways to run
 
-| | **Local (full)** — `npm run dev` | **Browser mode** — Vercel / `npm run dev:browser` |
+| | **Local (full)** — `npm run dev` | **Browser mode** — Vercel, GitHub Pages / `npm run dev:browser` |
 | --- | --- | --- |
 | Requests sent by | The Express server, so any API works and there are no CORS limits | Your browser, so the API must allow CORS |
 | Request headers | All | Browsers block a few (`Cookie`, `Host`, `Origin`, …) |
@@ -54,6 +54,10 @@ Browser mode is the same React app built with `--mode standalone` (see `client/.
 ### Deploying to Vercel
 
 `vercel.json` already sets everything: it runs `npm run build:standalone` and serves `client/dist`. In Vercel, choose **Add New → Project**, import the GitHub repo, and click **Deploy**. Don't change the defaults or the root directory. The Express server is not deployed: a public request-forwarding service would let anyone send traffic through it and could expose saved secrets.
+
+### Deploying to GitHub Pages
+
+`.github/workflows/deploy-pages.yml` runs the tests, builds browser mode and publishes it on every push to `main`. One-time setup: in the repo, go to **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**. The site is published at `https://<user>.github.io/api-workbench/`.
 
 ### Configuration (server environment variables)
 
